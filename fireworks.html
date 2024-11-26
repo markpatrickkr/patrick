@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fireworks Animation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        
+        canvas {
+            display: block;
+        }
+        /* Style the button */
+        
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #b355e9;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background-color: #ff3b2b;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="fireworksCanvas"></canvas>
+
+    <!-- Back to main page button -->
+    <button class="back-btn" onclick="window.location.href='index.html'">Back to Main Page</button>
+
+    <script>
+        const canvas = document.getElementById("fireworksCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Set canvas size to fill the screen
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Firework object
+        class Firework {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.particles = [];
+                this.exploded = false;
+                this.targetY = Math.random() * canvas.height / 2 + 100;
+                this.launchSpeed = 10 + Math.random() * 5;
+            }
+
+            update() {
+                if (!this.exploded) {
+                    this.y -= this.launchSpeed; // Move the firework up
+                    if (this.y <= this.targetY) {
+                        this.explode();
+                    }
+                } else {
+                    for (let i = this.particles.length - 1; i >= 0; i--) {
+                        const particle = this.particles[i];
+                        particle.update();
+                        if (particle.alpha <= 0) {
+                            this.particles.splice(i, 1); // Remove finished particles
+                        }
+                    }
+                }
+            }
+
+            explode() {
+                this.exploded = true;
+                const numParticles = 100; // Number of particles in explosion
+                for (let i = 0; i < numParticles; i++) {
+                    this.particles.push(new Particle(this.x, this.y, Math.random() * 2 * Math.PI, Math.random() * 3 + 1));
+                }
+            }
+
+            draw() {
+                if (!this.exploded) {
+                    // Draw the firework as a small circle moving upwards
+                    ctx.fillStyle = "purple";
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    for (const particle of this.particles) {
+                        particle.draw();
+                    }
+                }
+            }
+        }
+
+        // Particle class for explosion effect
+        class Particle {
+            constructor(x, y, angle, speed) {
+                this.x = x;
+                this.y = y;
+                this.angle = angle;
+                this.speed = speed;
+                this.life = 100; // Lifetime of the particle
+                this.alpha = 1; // Initial alpha (opacity) of particle
+                this.size = 3;
+                this.color = `rgba(148, 0, 211, ${this.alpha})`; // Violet color
+            }
+
+            update() {
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+
+                // Smooth fade-out effect using a decay factor
+                this.alpha -= 0.005; // Decrease alpha smoothly over time
+                this.size = Math.random() * 3 + 2; // Random size for particles
+
+                // Ensure the alpha doesn't go below zero
+                if (this.alpha < 0) {
+                    this.alpha = 0;
+                }
+
+                this.life--;
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(148, 0, 211, ${this.alpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Create fireworks
+        let fireworks = [];
+
+        function createFirework() {
+            const firework = new Firework(canvas.width / 2, canvas.height);
+            fireworks.push(firework);
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+
+            // Update and draw all fireworks
+            for (const firework of fireworks) {
+                firework.update();
+                firework.draw();
+            }
+
+            requestAnimationFrame(animate); // Loop the animation
+        }
+
+        // Start animation
+        createFirework();
+        animate();
+
+        // Create a new firework every 3 seconds
+        setInterval(createFirework, 3000);
+    </script>
+</body>
+
+</html>
